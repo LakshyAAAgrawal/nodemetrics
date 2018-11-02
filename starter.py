@@ -2,6 +2,7 @@
 
 import re
 import itertools
+import copy
 
 ROLLNUM_REGEX = "201[0-9]{4}"
 
@@ -19,11 +20,12 @@ class Graph(object):
             edges: List of 2-tuples specifying edges in graph
         """
 
-        self.vertices = vertices.sort()
+        self.vertices = vertices
         
         ordered_edges = list(map(lambda x: (min(x), max(x)), edges))
         
         self.edges    = ordered_edges
+        self.dist_from_point={}
         
         self.validate()
 
@@ -68,7 +70,7 @@ class Graph(object):
 
             raise Exception("Edges contain duplicates.\nEdges: {}\nDuplicate vertices: {}".format(edges, duplicate_edges))
 
-    def min_dist(self, start_node, end_node):
+    def min_dist(self, start_node, end_node, visited=[], explored=[], unvisited=[], dist=0):
         '''
         Finds minimum distance between start_node and end_node
 
@@ -81,10 +83,47 @@ class Graph(object):
             An integer denoting minimum distance between start_node
             and end_node
         '''
-        
-        raise NotImplementedError
-
-    def all_shortest_paths(start_node, end_node):
+        print("in " + str(dist)+" visited " + str(visited))
+        if start_node in self.dist_from_point:
+            if end_node in self.dist_from_point[start_node]:
+                return(self.dist_from_point[start_node][end_node])
+        if dist==0:
+            unvisited=copy.deepcopy(self.vertices)
+            if not (start_node in self.dist_from_point):
+                self.dist_from_point[start_node]={}
+            unvisited.remove(start_node)
+            visited=[]
+            explored=[]
+            visited.append(start_node)
+            return(self.min_dist(start_node, end_node, visited, explored, unvisited, dist+1))
+        else:
+            to_rem_vis=[]
+            to_add_vis=[]
+            #print("visited " + str(visited))
+            for i in visited:
+                #print("Exploring "+str(i))
+                #print("going through "+str(i))
+                to_rem_un=[]
+                for j in unvisited:
+                    if (min(i,j), max(i, j)) in self.edges:
+                        #print("Visiting " + str(j))
+                        #print("distance of "+str(j) + " " + str(dist))
+                        if not j in self.dist_from_point[start_node]:
+                            self.dist_from_point[start_node][j]=dist
+                        to_rem_un.append(j)
+                        to_add_vis.append(j)
+                        #print("visited "+str(j))
+                for t in to_rem_un:
+                    unvisited.remove(t)
+                to_rem_vis.append(i)
+                explored.append(i)
+                #print("Explored " + str(i))
+            for z in to_rem_vis:
+                visited.remove(z)
+            for a in to_add_vis:
+                visited.append(a)
+            return(self.min_dist(start_node, end_node, visited, explored, unvisited, dist+1))
+    def all_shortest_paths(self, start_node, end_node):
         """
         Finds all shortest paths between start_node and end_node
 
@@ -95,10 +134,18 @@ class Graph(object):
         Returns:
             A list of path, where each path is a list of integers.
         """
+        min_dis_bw_points=self.min_dist(start_node, end_node)
+        return(self.all_paths(start_node, end_node, min_dis_bw_points))
+    def neighbours(self, node):
+        a=[]
+        for i in self.edges:
+            if node==i[0]:
+                a.append(i[1])
+            elif node==i[1]:
+                a.append(i[0])
+        return(a)
 
-        raise NotImplementedError
-
-    def all_paths(node, destination, dist, path):
+    def all_paths(self, start_node, end_node, distance, paths=[], visited=[], explored=[], unvisited=[], dist=-1):
         """
         Finds all paths from node to destination with length = dist
 
@@ -113,8 +160,59 @@ class Graph(object):
 
             Returns None if there no paths
         """
-        
-        raise NotImplementedError
+        #print("in " + str(dist))
+        #print("visited " + str(visited))
+        if dist>(distance-1):
+            a=[]
+            for i in paths:
+                if i[-1]==end_node:
+                    a.append(i)
+            if len(a)==0:
+                return(None)
+            return(a)
+        if dist==-1:
+            unvisited=copy.deepcopy(self.vertices)
+            unvisited.remove(start_node)
+            visited=[]
+            explored=[]
+            visited.append(start_node)
+            new_paths=[[start_node]]
+            return(self.all_paths(start_node, end_node, distance, new_paths, visited, explored, unvisited, dist+1))
+        else:
+            to_rem_vis=[]
+            to_add_vis=[]
+            #print("visited " + str(visited))
+            new_paths=[]
+            for i in visited:
+                print("checking for neighbours of "+str(i))
+                print(paths)
+                list_of_neighbours=self.neighbours(i)
+                #print("neighbours of "+str(i)+" "+str(list_of_neighbours))
+                to_rem_un=[]
+                for neighbour in list_of_neighbours:
+                    neigh_rev=self.neighbours(neighbour)
+                    for neighbour_of_neighbour in neigh_rev:
+                        for path in paths:
+                            if path[-1]==neighbour_of_neighbour:
+                                if not neighbour in path:
+                                    if not path+[neighbour] in new_paths:
+                                        new_paths.append(path+[neighbour])
+                    if neighbour in unvisited:
+                        to_rem_un.append(neighbour)
+                        to_add_vis.append(neighbour)
+                #print("Exploring "+str(i))
+                #print("going through "+str(i))
+                for t in to_rem_un:
+                    unvisited.remove(t)
+                to_rem_vis.append(i)
+                explored.append(i)
+                #print("Explored " + str(i))
+            for z in to_rem_vis:
+                visited.remove(z)
+            for a in to_add_vis:
+                visited.append(a)
+            #print("in "+ str(dist) + " paths " + str(new_paths))
+            return(self.all_paths(start_node, end_node, distance, new_paths, visited, explored, unvisited, dist+1))
 
     def betweenness_centrality(self, node):
         """
