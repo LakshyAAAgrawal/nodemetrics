@@ -25,6 +25,8 @@ class Graph(object):
         ordered_edges = list(map(lambda x: (min(x), max(x)), edges))
         
         self.edges    = ordered_edges
+        
+        #A dictionary of dictionary to store the distance of each point from each point, which has already been calculated
         self.dist_from_point={}
         
         self.validate()
@@ -84,9 +86,13 @@ class Graph(object):
             and end_node
         '''
         #print("in " + str(dist)+" visited " + str(visited))
+        
+        #Checks if the distance has already been calculated, also acts as a base case
         if start_node in self.dist_from_point:
             if end_node in self.dist_from_point[start_node]:
                 return(self.dist_from_point[start_node][end_node])
+        
+        #the first call to the function
         if dist==0:
             unvisited=copy.deepcopy(self.vertices)
             if not (start_node in self.dist_from_point):
@@ -97,6 +103,7 @@ class Graph(object):
             visited.append(start_node)
             return(self.min_dist(start_node, end_node, visited, explored, unvisited, dist+1))
         else:
+            #all other calls, implements BFS
             to_rem_vis=[]
             to_add_vis=[]
             for i in visited:
@@ -136,6 +143,9 @@ class Graph(object):
         min_dis_bw_points=self.min_dist(start_node, end_node)
         return(self.all_paths(start_node, end_node, min_dis_bw_points))
     def neighbours(self, node):
+        '''
+        From the graph, returns a list of neighbours for the given node
+        '''
         a=[]
         for i in self.edges:
             if node==i[0]:
@@ -161,6 +171,8 @@ class Graph(object):
         """
         #print("in " + str(dist))
         #print("visited " + str(visited))
+        
+        #Base Case
         if dist>(distance-1):
             a=[]
             for i in paths:
@@ -169,6 +181,8 @@ class Graph(object):
             if len(a)==0:
                 return(None)
             return(a)
+        
+        #First Call
         if dist==-1:
             unvisited=copy.deepcopy(self.vertices)
             unvisited.remove(start_node)
@@ -178,6 +192,7 @@ class Graph(object):
             new_paths=[[start_node]]
             return(self.all_paths(start_node, end_node, distance, new_paths, visited, explored, unvisited, dist+1))
         else:
+            #All other calls
             to_rem_vis=[]
             to_add_vis=[]
             #print("visited " + str(visited))
@@ -198,6 +213,7 @@ class Graph(object):
                             if path[-1]==neighbour_of_neighbour:
                                 if not neighbour in path:
                                     if not path+[neighbour] in new_paths:
+                                        #Append the path if the node being added is not already present in the path, so as to ensure looped paths are rejected
                                         new_paths.append(path+[neighbour])
                     if neighbour in unvisited:
                         to_rem_un.append(neighbour)
@@ -208,6 +224,8 @@ class Graph(object):
                     unvisited.remove(t)
                 to_rem_vis.append(i)
                 explored.append(i)
+                
+                #This is done so that paths can be generated to reach any node in a given number of steps
                 unvisited.append(i)
                 #print("Explored " + str(i))
             for z in to_rem_vis:
@@ -225,7 +243,7 @@ class Graph(object):
             node: Node to find betweenness centrality of.
 
         Returns:
-            Single floating point number, denoting betweenness centrality
+            Single floating point number, denoting standardized betweenness centrality
             of the given node
         """
         num_of_nodes=len(self.vertices)
@@ -250,18 +268,33 @@ class Graph(object):
 
     def top_k_betweenness_centrality(self):
         """
-        Find top k nodes based on highest equal betweenness centrality.
+        Find top k nodes based on highest equal standardized betweenness centrality.
 
         
         Returns:
             List a integer, denoting top k nodes based on betweenness
             centrality.
         """
-
-        raise NotImplementedError
-
+        list_of_sbc=[]
+        for i in self.vertices:
+            list_of_sbc.append((self.betweenness_centrality(i), i))
+        #print("Before "+str(list_of_sbc))
+        list_of_sbc.sort(reverse=True)
+        #print("After "+str(list_of_sbc))
+        z=[[],0]
+        for i in range(len(list_of_sbc)):
+            if i==0:
+                z[0].append(list_of_sbc[i][1])
+            else:
+                if list_of_sbc[i][0]==list_of_sbc[i-1][0]:
+                    z[0].append(list_of_sbc[i][1])
+                else:
+                    z[1]=list_of_sbc[0][0]
+                    break
+        return(z)
 if __name__ == "__main__":
     vertices = [1, 2, 3, 4, 5, 6]
-    edges    = [(1, 2), (1, 5), (2, 3), (2, 5), (3, 4), (4, 5), (4, 6)]
+    edges    = [(1, 2), (1, 5), (2, 3), (2, 5), (3, 4), (4, 5), (4, 6), (3,6)]
 
     graph = Graph(vertices, edges)
+    print(graph.top_k_betweenness_centrality())
