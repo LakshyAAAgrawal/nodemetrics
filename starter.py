@@ -83,7 +83,7 @@ class Graph(object):
             An integer denoting minimum distance between start_node
             and end_node
         '''
-        print("in " + str(dist)+" visited " + str(visited))
+        #print("in " + str(dist)+" visited " + str(visited))
         if start_node in self.dist_from_point:
             if end_node in self.dist_from_point[start_node]:
                 return(self.dist_from_point[start_node][end_node])
@@ -99,7 +99,6 @@ class Graph(object):
         else:
             to_rem_vis=[]
             to_add_vis=[]
-            #print("visited " + str(visited))
             for i in visited:
                 #print("Exploring "+str(i))
                 #print("going through "+str(i))
@@ -182,10 +181,13 @@ class Graph(object):
             to_rem_vis=[]
             to_add_vis=[]
             #print("visited " + str(visited))
+            #print("visited " + str(visited))
+            #print("unvisited " + str(unvisited))
+            #print("explored " + str(explored))
             new_paths=[]
             for i in visited:
-                print("checking for neighbours of "+str(i))
-                print(paths)
+                #print("checking for neighbours of "+str(i))
+                #print(new_paths)
                 list_of_neighbours=self.neighbours(i)
                 #print("neighbours of "+str(i)+" "+str(list_of_neighbours))
                 to_rem_un=[]
@@ -206,6 +208,7 @@ class Graph(object):
                     unvisited.remove(t)
                 to_rem_vis.append(i)
                 explored.append(i)
+                unvisited.append(i)
                 #print("Explored " + str(i))
             for z in to_rem_vis:
                 visited.remove(z)
@@ -225,8 +228,25 @@ class Graph(object):
             Single floating point number, denoting betweenness centrality
             of the given node
         """
-
-        raise NotImplementedError
+        num_of_nodes=len(self.vertices)
+        bc=0
+        for i in range(0,num_of_nodes):
+            if self.vertices[i]==node:
+                continue
+            for j in range(i+1, num_of_nodes):
+                if self.vertices[j]==node:
+                    continue
+                #print(i,j,num_of_nodes)
+                shortest_paths=self.all_shortest_paths(self.vertices[i], self.vertices[j])
+                num_of_shortest_passing_through_node=0
+                num_of_paths=0
+                for path in shortest_paths:
+                    if node in path:
+                        num_of_shortest_passing_through_node+=1
+                    num_of_paths+=1
+                bc+=(num_of_shortest_passing_through_node/num_of_paths)
+        sbc=(2*bc)/((num_of_nodes-1)*(num_of_nodes-2))
+        return(sbc)
 
     def top_k_betweenness_centrality(self):
         """
