@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
+# Author : Lakshya A Agrawal
 
 import re
 import itertools
 import copy
 
-ROLLNUM_REGEX = "201[0-9]{4}"
 
 class Graph(object):
-    name = "Lakshya A Agrawal"
-    email = "lakshya18242@iiitd.ac.in"
-    roll_num = "2018242"
-
     def __init__ (self, vertices, edges):
         """
         Initializes object for the class Graph
@@ -37,22 +33,10 @@ class Graph(object):
 
         Raises:
             Exception if:
-                - Name is empty or not a string
-                - Email is empty or not a string
-                - Roll Number is not in correct format
                 - vertices contains duplicates
                 - edges contain duplicates
                 - any endpoint of an edge is not in vertices
         """
-
-        if (not isinstance(self.name, str)) or self.name == "":
-            raise Exception("Name can't be empty")
-
-        if (not isinstance(self.email, str)) or self.email == "":
-            raise Exception("Email can't be empty")
-
-        if (not isinstance(self.roll_num, str)) or (not re.match(ROLLNUM_REGEX, self.roll_num)):
-            raise Exception("Invalid roll number, roll number must be a string of form 201XXXX. Provided roll number: {}".format(self.roll_num))
 
         if not all([isinstance(node, int) for node in self.vertices]):
             raise Exception("All vertices should be integers")
